@@ -1,0 +1,87 @@
+create table usesrs (
+iser_id int, 
+last_name varchar (256));
+
+insert into usesrs values
+(1,'petrov'),
+(2,'ivanov'),
+(3,'petrov'),
+(4,'ivanov'),
+(5,'romashikina');
+
+select
+last_name,
+count(*) as cont_ln,
+case 
+	when count(*)>1 then 'duble'
+	else 'uniq'
+end as priznak
+from usesrs
+group by last_name;
+
+
+create table orders (
+id int,
+client_id int,
+payment_date date)
+partition by range (payment_date);
+
+create table orders_january_2025 partition of orders
+for values from ('2025-01-01') to ('2025-01-31');
+
+create table orders_feb_2025 partition of orders
+for values from ('2025-02-01') to ('2025-02-28');
+
+insert into orders (id, client_id, payment_date)
+values 
+(1,1, '2025-01-15'),
+(2,1, '2025-02-15'),
+(3,1, '2025-02-18');
+
+select * from orders;
+
+select tableoid::regclass, * from orders;
+
+
+create table client_order (
+id int,
+order_status int)
+partition by list (order_status);
+
+
+create table client_order_status_1 partition of client_order
+for values in (1);
+
+create table client_order_status_2 partition of client_order
+for values in (2);
+
+insert into  client_order (id,order_status)
+values
+(1,1),
+(2,2),
+(3,1);
+
+select * from client_order;
+
+select tableoid::regclass, * from client_order;
+
+
+insert into  client_order (id,order_status)
+values
+(4,3);
+
+create table client_order_status_default partition of client_order
+default;
+
+create table client_order_status_3 partition of client_order
+for values in (3);
+
+create table client_order_status_4_7 partition of client_order
+for values in (4,5,6,7);
+
+insert into  client_order (id,order_status)
+values
+(5,5);
+
+
+

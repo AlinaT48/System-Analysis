@@ -1,0 +1,156 @@
+select *
+from client_order co 
+where co.client_order_status_id =6
+	/*and co.update_time >= current_date - interval '7 days'*/
+and co.update_time >= current_date - interval '1 year'
+limit 10
+offset 15;
+
+select 
+pg.group_name,
+count (p.product_id) as colichestvo
+from
+product_group as pg
+left join 
+product p 
+on pg.product_group_id =p.product_group_id
+group by pg.group_name
+having count (p.product_id)>4;
+
+select 
+pg.group_name,
+pg.product_group_id
+from 
+product_group as pg
+left join 
+product p 
+on
+pg.product_group_id = p.product_group_id
+where 
+p.product_id is null
+order by 
+pg.product_group_id;
+
+
+select 
+pg.group_name,
+pg.product_group_id
+from 
+product_group as pg
+where 
+not exists (
+select 'kjyfvbgloitvgho;ukbtfhvb;oukhnmhv'
+from product p 
+where p.product_group_id =pg.product_group_id );
+
+
+select 
+p.product_name,
+AVG (cod.amount_product_sum) as srednee
+from 
+client_order_detail as cod
+join 
+client_order co 
+on cod.client_order_id = co.client_order_id
+join 
+product p 
+on cod.product_id =p.product_id 
+where
+p.product_id = 10
+and co.client_order_status_id = 6
+and co.update_time between '2024-01-01' and '2025-08-08'
+group by p.product_name;
+
+select 
+pg.product_group_id,
+pg.group_name
+from product_group pg 
+where 
+pg.product_group_id not in (
+select distinct 
+p.product_group_id
+from
+client_order_detail cod 
+join client_order co  on cod.client_order_id =co.client_order_id 
+join product as p on cod.product_id =p.product_id
+where 
+co.client_order_status_id = 6
+and
+co.update_time between '2024-01-01' and '2025-08-08'
+)
+order by pg.product_group_id;
+
+/*Средняя сумма продаж по всем группам за период*/
+select 
+pg.product_group_id,
+pg.group_name,
+AVG (cod.amount_product_sum) as srednee,
+count (co.client_order_id) as zakazu,
+sum (cod.amount_product_sum) as totla_summa
+from client_order_detail cod 
+join client_order co  on cod.client_order_id =co.client_order_id
+join product p on cod.product_id = p.product_id
+join product_group pg on p.product_group_id =pg.product_group_id
+where 
+co.client_order_status_id =6
+and
+co.update_time between '2024-01-01' and '2025-08-08'
+group by
+pg.product_group_id, pg.group_name
+order by srednee desc;
+
+/*количество корзин больше среднего значения сумм корзин потом закрутить в with*/
+select 
+count(*) as totlal,
+sum(amount_product_sum) as total_sum
+from client_order_detail cod 
+where 
+amount_product_sum > (
+select  avg(amount_product_sum)
+from client_order_detail cod2 );
+
+with average_value as (
+select  avg(amount_product_sum) as srednee
+from client_order_detail cod2 )
+select 
+count(*) as totlal,
+sum(amount_product_sum) as total_sum
+from client_order_detail cod 
+cross join average_value
+where
+amount_product_sum > srednee;
+
+select 
+product_group_id,
+case
+	when product_group_id = 1 then  '10653EN'
+	when product_group_id = 2 then 'сырные продукты и сыр'
+	else group_name
+end as name_for_API
+from product_group pg ;
+
+
+create view view_product_in_stok as
+select
+p.product_id,
+p.product_name,
+p.price_with_discount,
+p.count_of_products_warehouse
+from product as p
+where 
+p.count_of_products_warehouse>3;
+
+create materialized view view_product_in_stok1 as
+select
+p.product_id,
+p.product_name,
+p.price_with_discount,
+p.count_of_products_warehouse
+from product as p
+where 
+p.count_of_products_warehouse>3;
+
+select * from view_product_in_stok;
+select *from view_product_in_stok1;
+
+refresh materialized view view_product_in_stok1;
