@@ -1,4 +1,5 @@
 # System-Analysis
+
 This repository is intended to store and maintain complete documentation for the information system. It serves as a single source of truth for all key project artifacts required for system development, maintenance, and understanding.
 
 ## Repository Structure
@@ -6,33 +7,34 @@ This repository is intended to store and maintain complete documentation for the
 The repository contains the following documentation sections:
 
 ### Non-Functional Requirements (NFR)
-Documentation of system quality attributes, including performance, reliability, security, scalability and availability requirements.
 
-### Architecture (C4 Model)
+Documentation of system quality attributes and constraints, including performance, security, reliability, scalability, and availability requirements.
+
+### Architecture 
+
 System architecture described using the C4 model:
-- System Context Diagram
-- Container Diagram
-- Component Diagram 
+ - System Context Diagram
+ - Container Diagram
+ - Component Diagram
+   
+### Database 
 
-### Database Description
 Database documentation, including:
-- Entity-Relationship (ER) diagrams
-- Table structures
-- Relationships between entities
-- Core business entities
+ - Entity-Relationship (ER) diagrams
+ - Table structures and attributes
+ - Relationships between entities
 
-### API Documentation (Swagger / OpenAPI)
-API specifications describing all available REST endpoints:
-- Request parameters
-- Response structures
-- Example payloads
+### API Documentation 
 
+- Swagger
+- Postman
 
-## Purpose of the Repository
+###README
 
-- Centralized storage of project documentation
-- Support for system development and maintenance
-- Easier onboarding of new team members
-- Documentation of architectural and design decisions
+The README file provides an overview of the repository structure, navigation guidelines, and instructions on how to work with the documentation.
+
+###Purpose of the Repository
+
+The purpose of this repository is to provide a single source of truth for all system documentation, ensuring transparency, consistency, and ease of understanding for developers, analysts, and stakeholders.
 
 
