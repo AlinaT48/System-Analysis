@@ -1,0 +1,114 @@
+workspace "Архитектура системы электронной коммерции" "Представление системы электронной коммерции."{
+
+model {
+    group "Shop" {
+        seller = person "Продавец" "Управляет продажами своего товара."
+        buyer = person "Покупатель" "Просматривает ассортимент каталога."
+        admin = person "Администратор" "Управляет пользователями и настройкой системы."
+        manager = person "Менеджер по продажам" "Регистрирует сделки с клиентами."
+
+        xero = softwareSystem "Xero (внешняя система)" "Формирует бухгалтерскую документацию" "Existing System"
+        paymentGateWay = softwareSystem "Stripe (внешняя система)" "Обрабатывает платежи, обеспечивает приём оплат и возврат средств."
+        salesforce = softwareSystem "Salesforce (внешняя система)" "Управляет клиентами, сделками и активностями."
+
+        ShopSystem = softwareSystem "Онлайн-площадка B2B"  "Позволяет продавцам управлять своими товарами, проводить сделки между менеджерами по продажам и покупателями." {
+            mobileApp = container "Мобильное приложение" "Позволяет покупателям просматривать каталог товаров, добавлять их в корзину и совершать заказы через мобильное устройство." "Vue + Node.js"   "Mobile App"
+            webApplication = container "Веб-приложение" "Предоставляет полный функционал платформы через браузер: управление товарами, создание и обработка заказов." "Vue + Node.js" "Browser"
+            BackEnd = container "Backend" ".NET"  "Обрабатывает бизнес-логику и подключается к внешним системам."  "Application" {
+                balance = component "Балансировщик"  "Производит балансировку нагрузки" "Internal Load Balancer"
+                group "Business Modules" {
+                    AuthService = component "Модуль аутентификации" "Обрабатывает аутентификацию и управление доступом пользователей."  ".NET / C#"
+                    PaymentService = component "Модуль оплаты" "Обрабатывает платежи и возвраты."".NET / C#"
+                    CatalogService = component "Модуль каталога" "Управляет каталогом товаров: добавление, удаление, изменение, фильтры."  ".NET / C#"
+                    ProfileService = component "Модуль личного кабинета" "Управляет профилями пользователей и настройками аккаунтов." ".NET / C#"
+                    BasketService = component "Модуль корзины" "Управлят корзиной покупателя: добавление, удаление и изменение позиций." ".NET / C#"
+                    PromoService = component "Модуль промокодов" "Обрабатывает промокоды, скидки и акции для пользователей." ".NET / C#"
+                    AdminModule = component "Модуль администрирования" "Модуль администрирования системы: управление пользователями, ролями, настройками платформы." ".NET / C#"
+                }
+                RedisCache = component "Redis Cache" "Кэширование данных и ускорение доступа к часто запрашиваемой информации."
+            }
+
+            database = container "Database" "Хранит информацию о регистрации пользователя, хешированные учетные данные аутентификации, журналы доступа и т. д.""Oracle Database" "Database"
+            financialDB = container "Financial DB"  "Хранит локальные финансовые данные, счета, транзакции и историю платежей." "PostgreSQL" "Database"
+        }
+    }
+
+
+    seller -> webApplication "Users" "HTTPS"
+    buyer -> webApplication "Users" "HTTPS"
+    seller -> mobileApp "Users" "HTTPS"
+    buyer -> mobileApp "Users" "HTTPS"
+    manager -> webApplication "Manages" "HTTPS"
+    admin -> webApplication "Manages" "HTTPS"
+
+    webApplication -> BackEnd "API" "JSON/HTTPS"
+    mobileApp -> BackEnd "API" "JSON/HTTPS"
+
+    BackEnd -> database "SQL connect" "JDBC"
+    BackEnd -> financialDB "SQL connect" "JDBC"
+
+    BackEnd -> xero "Передает финансовые данные" "JSON/HTTPS"
+    BackEnd -> paymentGateWay "Передает данные для обработки платежей" "JSON/HTTPS"
+    BackEnd -> salesforce "Передает данные о клиентах и сделках" "JSON/HTTPS"
+
+
+balance -> ProfileService   "Распределяет входящие запросы" 
+AuthService -> RedisCache   "Кэширует сессии и токены авторизации" "Internal call"
+ProfileService -> RedisCache "Кэширует данные профиля пользователей" "Internal call"
+BasketService -> RedisCache  "Кэширует корзины пользователей" "Internal call"
+PaymentService -> xero  "Отправляет данные о транзакциях и счетах" "JSON/HTTPS"
+PaymentService -> paymentGateWay "Передаёт данные платежа" "JSON/HTTPS"
+AuthService -> salesforce "Передаёт данные о новых пользователях" "JSON/HTTPS"
+PaymentService -> salesforce "Передаёт данные о платежах и сделках" "JSON/HTTPS"
+} 
+
+views {
+    systemContext ShopSystem "SystemContext" {
+        include *
+        autoLayout
+        description "Отображает систему интернет-магазина и ее взаимодействие с пользователями и внешними системами."
+    }
+
+    container ShopSystem "Containers" {
+        include *
+        autoLayout
+        description "Подробно описывает контейнеры системы интернет-магазина и их взаимодействие."
+    }
+
+    component BackEnd "Components" {
+        include *
+        autoLayout
+        description "Показывает внутренние компоненты Backend-службы."
+    }
+
+    styles {
+        element "Person" {
+            shape Person
+            color #ffffff
+            background #08427b
+        }
+        element "Software System" {
+            color #ffffff
+            background #1168bd
+        }
+        element "Container" {
+            color #ffffff
+            background #438dd5
+        }
+        element "Component" {
+            background #85bbf0
+            color #000000
+        }
+        element "Database" {
+            shape Cylinder
+            background #f5da81
+        }
+        element "Broker" {
+            shape Cylinder
+            background #f2f2f2
+        }
+    }
+}
+}
+
+
