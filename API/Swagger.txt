@@ -1,0 +1,464 @@
+openapi: 3.0.0
+info:
+  title: Swagger EShop
+  description: Online store API documentation
+  contact:
+    email: trushyna@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+
+externalDocs:
+  description: Find out more about Swagger
+  url: https://swagger.io
+
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://634f453e-d0ae-41d6-8ddb-88957bf9b215.mock.pstmn.io
+  - description: SwaggerHub API Auto Mocking
+    url: https://petstore3.swagger.io/api/v3
+
+tags:
+  - name: Customer
+    description: Operations available to customers
+  - name: Seller
+    description: Operations for sellers
+  - name: Sales manager
+    description: Sales management operations
+  - name: Admin
+    description: Administrative operations
+
+paths:
+  /products:
+    get:
+      tags:
+        - Seller
+        - Customer
+        - Sales manager
+        - Admin
+      summary: Filter products
+      parameters:
+        - name: filter_by
+          in: query
+          description: Filter by catalog ID
+          required: false
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: Sort results by price
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '406':
+          description: The request filter parameters are not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error406'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+    post:
+      tags:
+        - Seller
+      summary: Create product
+      description: Creates a new product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product11'
+      responses:
+        '200':
+          description: Product successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '403':
+          description: You do not have permission to add products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+
+  /products/{productId}:
+    patch:
+      tags:
+        - Admin
+      summary: Update product publication status
+      description: Updates the publication status of an existing product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product unique identifier
+          schema:
+            type: integer
+            example: 5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [published, new]
+                  default: published
+      responses:
+        '200':
+          description: Product status successfully updated
+          content:
+            application/json:
+              schema:
+                 allOf:
+                  - $ref: '#/components/schemas/Product'
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [published, new]
+                        example: published
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+  /products/{productId}/discounts:
+    put:
+      tags:
+        - Sales manager
+      summary: Update product discount
+      description: Updates discount information for a specific product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product unique identifier
+          schema:
+            type: integer
+            example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discount1'
+      responses:
+        '200':
+          description: Product discount successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discount'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+  /carts/{productId}:
+    delete:
+      tags:
+        - Customer
+      summary: Delete product from cart 
+      description: Removes a product from the customer's cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product unique identifier
+          schema:
+            type: integer
+            example: 5
+      responses:
+        '200':
+          description: Product was successfully removed from thec cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      example: "Product was successfully deleted."
+                    productId:
+                      type: integer
+                      example: 5  
+          
+        '404':
+          description: Product with specified ID does not exist in the cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        
+        '500':
+          description: An unexpected error occurred while deleting the order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Product:
+      type: object
+      required:
+        - catalog_id
+        - catalog_name
+        - product_id
+        - product_name
+        - product_description
+        - price
+        - quantity
+        - seller_id
+        - create_time
+      properties:
+        catalog_id:
+          type: integer
+          example: 5
+        catalog_name:
+          type: string
+          example: Coats
+        product_id:
+          type: integer
+          example: 10
+        product_name:
+          type: string
+          example: Coat 11
+        product_description:
+          type: string
+          example: New Coat
+        price:
+          type: number
+          format: decimal
+          example: 500.00
+        quantity:
+          type: integer
+          example: 5
+        seller_id:
+          type: string
+          example: SPH001
+        create_time:
+          type: string
+          format: date-time
+          example: "22024-11-06T18:15:21.783418"
+        update_time:
+          type: string
+          format: date-time
+          example: "2024-11-06T18:15:21.783418"
+
+    Product11:
+      type: object
+      required:
+        - product_name
+        - product_description
+        - price
+        - quantity
+        - seller_id
+        - catalog_name
+      properties:
+        catalog_name:
+          type: string
+          example: Coats
+        product_name:
+          type: string
+          example: Coat 11
+        product_description:
+          type: string
+          example: New Coat
+        price:
+          type: number
+          format: decimal
+          example: 500.00
+        quantity:
+          type: integer
+          example: 5
+        seller_id:
+          type: string
+          example: SPH001
+
+    Discount1:
+      type: object
+      required:
+        - discount_value
+        - discount_name
+        - discount_start_date
+        - discount_end_date
+      properties:
+        discount_value:
+          type: integer
+          example: 5
+        discount_name:
+          type: string
+          example: DISCOUNT
+        discount_start_date:
+          type: string
+          format: date
+          example: "2025-11-21"
+        discount_end_date:
+          type: string
+          format: date
+          example: "2025-11-23"
+
+    Discount:
+      type: object
+      required:
+        - product_id
+        - product_name
+        - product_description
+        - price
+        - seller_id
+        - discount_value
+        - discount_name
+        - discount_start_date
+        - discount_end_date
+      properties:
+        product_id:
+          type: integer
+          example: 5
+        product_name:
+          type: string
+          example: Coat 11
+        product_description:
+          type: string
+          example: New Coat
+        seller_id:
+          type: integer
+          example: 42
+        discount_value:
+          type: integer
+          example: 5
+        discount_name:
+          type: string
+          example: DISCOUNT
+        discount_start_date:
+          type: string
+          format: date
+          example: "2025-01-01"
+        discount_end_date:
+          type: string
+          format: date
+          example: "2025-01-31"
+        price:
+          type: number
+          format: decimal
+          example: 500.00
+        
+
+    Error400:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "400 Bad Request"
+        message:
+          type: string
+          example: Invalid request data
+
+    Error403:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "403 Forbidden"
+        message:
+          type: string
+          example: You do not have permission to add products.
+
+    Error406:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "406 Not acceptable"
+        message:
+          type: string
+          example: The requested filter parameters are not supported.
+
+    Error500:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "500 Internal server error"
+        message:
+          type: string
+          example: An unexpected error occurred while processing the request.
+
+    Error404:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "404 Not Found"
+        message:
+          type: string
+          example: Product with specified ID does not exist in the cart.
+
